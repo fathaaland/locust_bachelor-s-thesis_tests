@@ -44,11 +44,11 @@ class ApiUser(HttpUser):
                 f"/user/{user_id}",
                 headers=self.auth_header,
                 catch_response=True
-        ) as get_by_name_res:
-            if get_by_name_res.status_code == 200 or get_by_name_res.status_code == 201:
-                get_by_name_res.success()
+        ) as get_by_id_res:
+            if get_by_id_res.status_code == 200 or get_by_id_res.status_code == 201:
+                get_by_id_res.success()
             else:
-                get_by_name_res.failure(f"Get by id failed: {get_by_name_res.status_code}")
+                get_by_id_res.failure(f"Get by id failed: {get_by_id_res.status_code}")
                 return
 
 
@@ -71,7 +71,7 @@ class ApiUser(HttpUser):
 
         # 5. Get user by name
         with self.client.get(
-                f"/user/{user_username}",
+                f"/user/by-username/{user_username}",
                 headers=self.auth_header,
                 catch_response=True
         ) as get_by_name_res:
@@ -80,4 +80,16 @@ class ApiUser(HttpUser):
             else:
                 get_by_name_res.failure(f"Get by name failed: {get_by_name_res.status_code}")
                 return
+
+        # 6. Get user by mail
+            with self.client.get(
+                    f"/user/mail/{user_mail}",
+                    headers=self.auth_header,
+                    catch_response=True
+            ) as get_by_mail_res:
+                if get_by_mail_res.status_code == 200 or get_by_mail_res.status_code == 201:
+                    get_by_mail_res.success()
+                else:
+                    get_by_mail_res.failure(f"Get by name failed: {get_by_mail_res.status_code}")
+                    return
 
