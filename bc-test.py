@@ -26,3 +26,10 @@ class ApiUser(HttpUser):
 
         # 1. Login
         login_payload = {"username": username, "password": password}
+        with self.client.post("auth/login", json=login_payload) as login_res:
+            if login_res.status_code == 200:
+                token = login_res.json().get("token")
+                self.auth_header = {"Authorization": f"Bearer {token}"}
+            else:
+                print("Goodbye!")
+                exit()
