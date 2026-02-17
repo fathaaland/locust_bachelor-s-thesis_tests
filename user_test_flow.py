@@ -22,7 +22,7 @@ class ApiUser(HttpUser):
                 res.failure(f"Admin login failed: {res.status_code}")
 
     @task
-    def complete_flow(self):
+    def user_flow(self):
         unique_id = str(uuid.uuid4())[:8]
         username = f"Vaclav_{unique_id}"
         password = "Venca321"
