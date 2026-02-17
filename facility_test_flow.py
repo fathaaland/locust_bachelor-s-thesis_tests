@@ -47,6 +47,7 @@ class ApiFacility(HttpUser):
             if add_facility_res.status_code in [200, 201]:
                 data = add_facility_res.json()
                 facility_id = data.get("id") or data.get("facilityId") or data.get("uuid")
+                facility_name = data.get("name") or data.get("name") or data.get("facilityName")
                 add_facility_res.success()
             else:
                 add_facility_res.failure(f"Creation facility failed: {add_facility_res.status_code}")
@@ -72,15 +73,15 @@ class ApiFacility(HttpUser):
             else:
                 res.failure(f"Admin Update failed: {res.status_code}")
 
-        # 5. Admin: Get user by name
-        with self.client.get(f"/user/by-username/{username}", headers=self.auth_header_admin,
-                             name="/user/by-username/[name]", catch_response=True) as res:
+        # 4. Get user by facility name
+        with self.client.get(f"/facilities/name/{facility_name}", headers=self.auth_header_admin,
+                             name="/facilities/name/[name]", catch_response=True) as res:
             if res.status_code == 200:
                 res.success()
             else:
                 res.failure(f"Admin Get by Name failed: {res.status_code}")
 
-        # 6. Admin: Get user by mail
+        # 5. Admin: Get user by mail
         with self.client.get(f"/user/mail/{email}", headers=self.auth_header_admin,
                              name="/user/mail/[mail]", catch_response=True) as res:
             if res.status_code == 200:
