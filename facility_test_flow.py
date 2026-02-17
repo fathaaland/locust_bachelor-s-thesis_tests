@@ -1,5 +1,6 @@
 import uuid
 from locust import HttpUser, task, between
+import random
 
 class ApiFacility(HttpUser):
     wait_time = between(1, 3)
@@ -40,6 +41,7 @@ class ApiFacility(HttpUser):
             "facility_adress": facility_adress
         }
 
+        # 1. Facility creation
         with self.client.post("/facilities/add", json=facility_payload, name="/facilities/add",
                               catch_response=True) as add_facility_res:
             if add_facility_res.status_code in [200, 201]:
@@ -53,6 +55,46 @@ class ApiFacility(HttpUser):
         if not facility_id:
             return
 
+        # 2. Get facility by id
+        with self.client.get(f"/facilities/{facility_id}", headers=self.auth_header_admin, name="/facilities/[id]",
+                             catch_response=True) as res:
+            if res.status_code == 200:
+                res.success()
+            else:
+                res.failure(f"Admin Get by ID failed: {res.status_code}")
+
+        # 3. Update facility
+        random_capacity = random.randint(1, 30)
+        with self.client.patch(f"/facilities/update/{facility_id}", json={f"capacity": {random_capacity}},
+                               headers=self.auth_header_admin, name="/facilities/update/[id]", catch_response=True) as res:
+            if res.status_code == 200:
+                res.success()
+            else:
+                res.failure(f"Admin Update failed: {res.status_code}")
+
+        # 5. Admin: Get user by name
+        with self.client.get(f"/user/by-username/{username}", headers=self.auth_header_admin,
+                             name="/user/by-username/[name]", catch_response=True) as res:
+            if res.status_code == 200:
+                res.success()
+            else:
+                res.failure(f"Admin Get by Name failed: {res.status_code}")
+
+        # 6. Admin: Get user by mail
+        with self.client.get(f"/user/mail/{email}", headers=self.auth_header_admin,
+                             name="/user/mail/[mail]", catch_response=True) as res:
+            if res.status_code == 200:
+                res.success()
+            else:
+                res.failure(f"Admin Get by Mail failed: {res.status_code}")
+
+        # 7. Admin: Delete user by id
+        with self.client.delete(f"/user/delete/{user_id}", headers=self.auth_header_admin,
+                                name="/user/delete/[id]", catch_response=True) as res:
+            if res.status_code in [200, 204]:
+                res.success()
+            else:
+                res.failure(f"Admin Delete failed: {res.status_code}")
 
 
 

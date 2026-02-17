@@ -30,7 +30,7 @@ class ApiUser(HttpUser):
         reg_payload = {"username": username, "password": password, "email": email}
 
         user_id = None
-
+        # 1. User registration
         with self.client.post("/auth/register", json=reg_payload, name="/auth/register",
                               catch_response=True) as reg_res:
             if reg_res.status_code in [200, 201]:
@@ -44,6 +44,7 @@ class ApiUser(HttpUser):
         if not user_id:
             return
 
+        # 2. Login user
         login_payload = {"username": username, "password": password}
         with self.client.post("/auth/login", json=login_payload, name="/auth/login", catch_response=True) as login_res:
             if login_res.status_code == 200:
@@ -51,7 +52,7 @@ class ApiUser(HttpUser):
             else:
                 login_res.failure(f"User login failed: {login_res.status_code}")
 
-        # 3. Admin: Get user by id
+        # 3. Get user by id
         with self.client.get(f"/user/{user_id}", headers=self.auth_header_admin, name="/user/[id]",
                              catch_response=True) as res:
             if res.status_code == 200:
@@ -59,7 +60,7 @@ class ApiUser(HttpUser):
             else:
                 res.failure(f"Admin Get by ID failed: {res.status_code}")
 
-        # 4. Admin: Update user
+        # 4. Update user by id
         with self.client.patch(f"/user/update/{user_id}", json={"password": "updatedByAdmin123"},
                                headers=self.auth_header_admin, name="/user/update/[id]", catch_response=True) as res:
             if res.status_code == 200:
@@ -67,7 +68,7 @@ class ApiUser(HttpUser):
             else:
                 res.failure(f"Admin Update failed: {res.status_code}")
 
-        # 5. Admin: Get user by name
+        # 5. Get user by username
         with self.client.get(f"/user/by-username/{username}", headers=self.auth_header_admin,
                              name="/user/by-username/[name]", catch_response=True) as res:
             if res.status_code == 200:
@@ -75,7 +76,7 @@ class ApiUser(HttpUser):
             else:
                 res.failure(f"Admin Get by Name failed: {res.status_code}")
 
-        # 6. Admin: Get user by mail
+        # 6. Get user by mail
         with self.client.get(f"/user/mail/{email}", headers=self.auth_header_admin,
                              name="/user/mail/[mail]", catch_response=True) as res:
             if res.status_code == 200:
@@ -83,7 +84,7 @@ class ApiUser(HttpUser):
             else:
                 res.failure(f"Admin Get by Mail failed: {res.status_code}")
 
-        # 7. Admin: Delete user by id
+        # 7. Delete user by id
         with self.client.delete(f"/user/delete/{user_id}", headers=self.auth_header_admin,
                                 name="/user/delete/[id]", catch_response=True) as res:
             if res.status_code in [200, 204]:
