@@ -91,9 +91,9 @@ class ApiFacility(HttpUser):
             else:
                 res.failure(f"Admin Get by Type failed: {res.status_code}")
 
-        # 6. Admin: Delete user by id
-        with self.client.delete(f"/user/delete/{user_id}", headers=self.auth_header_admin,
-                                name="/user/delete/[id]", catch_response=True) as res:
+        # 6. Delete facility by id
+        with self.client.delete(f"/facilities/delete/{facility_id}", headers=self.auth_header_admin,
+                                name="/facilities/delete/[id]", catch_response=True) as res:
             if res.status_code in [200, 204]:
                 res.success()
             else:
