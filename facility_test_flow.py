@@ -25,6 +25,7 @@ class ApiFacility(HttpUser):
     def facility_test(self):
         facility_id = str(uuid.uuid4())[:8]
         facility_name = f"Salieri's football pitch {facility_id}"
+        facility_type = "FOOTBALL"
         facility_location = f"Little Italy {facility_id}"
         facility_description = "A large pitch next to Work's Quater."
         facility_contact = f"{facility_id}"
@@ -48,6 +49,7 @@ class ApiFacility(HttpUser):
                 data = add_facility_res.json()
                 facility_id = data.get("id") or data.get("facilityId") or data.get("uuid")
                 facility_name = data.get("name") or data.get("name") or data.get("facilityName")
+                facility_type = data.get("type") or data.get("type") or data.get("facilityType")
                 add_facility_res.success()
             else:
                 add_facility_res.failure(f"Creation facility failed: {add_facility_res.status_code}")
@@ -73,7 +75,7 @@ class ApiFacility(HttpUser):
             else:
                 res.failure(f"Admin Update failed: {res.status_code}")
 
-        # 4. Get user by facility name
+        # 4. Get facility by name
         with self.client.get(f"/facilities/name/{facility_name}", headers=self.auth_header_admin,
                              name="/facilities/name/[name]", catch_response=True) as res:
             if res.status_code == 200:
@@ -81,15 +83,15 @@ class ApiFacility(HttpUser):
             else:
                 res.failure(f"Admin Get by Name failed: {res.status_code}")
 
-        # 5. Admin: Get user by mail
-        with self.client.get(f"/user/mail/{email}", headers=self.auth_header_admin,
-                             name="/user/mail/[mail]", catch_response=True) as res:
+        # 5. Get facility by type
+        with self.client.get(f"/facilities/type/{facility_type}", headers=self.auth_header_admin,
+                             name="/facilities/type/[type]", catch_response=True) as res:
             if res.status_code == 200:
                 res.success()
             else:
-                res.failure(f"Admin Get by Mail failed: {res.status_code}")
+                res.failure(f"Admin Get by Type failed: {res.status_code}")
 
-        # 7. Admin: Delete user by id
+        # 6. Admin: Delete user by id
         with self.client.delete(f"/user/delete/{user_id}", headers=self.auth_header_admin,
                                 name="/user/delete/[id]", catch_response=True) as res:
             if res.status_code in [200, 204]:
