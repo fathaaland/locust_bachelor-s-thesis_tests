@@ -22,6 +22,8 @@ class ApiUser(HttpUser):
 
             if reg_res.status_code == 200 or reg_res.status_code == 201:
                 user_id = reg_res.json().get("id")
+                user_username = reg_res.json().get("username")
+                user_mail = reg_res.json().get("email")
 
             else:
                 reg_res.failure(f"Registration failed: {reg_res.status_code}")
@@ -36,7 +38,22 @@ class ApiUser(HttpUser):
             else:
                return
 
-        # 3. Update user
+
+        # 3. Get user by id
+        with self.client.get(
+                f"/user/{user_id}",
+                headers=self.auth_header,
+                name="/user/update/[id]",
+                catch_response=True
+        ) as get_by_id_res:
+            if get_by_id_res.status_code == 200 or get_by_id_res.status_code == 201:
+                get_by_id_res.success()
+            else:
+                get_by_id_res.failure(f"Get by id failed: {get_by_id_res.status_code}")
+                return
+
+
+        # 4. Update user
         with self.client.patch(
                     f"/user/update/{user_id}",
                     json={"password": "updated password123"},
@@ -51,3 +68,5 @@ class ApiUser(HttpUser):
                 else:
                     update_res.failure(f"Update failed: {update_res.status_code} - {update_res.text}")
                     return
+
+
