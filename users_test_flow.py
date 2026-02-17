@@ -4,7 +4,6 @@ from locust import HttpUser, task, between
 
 class ApiUser(HttpUser):
     wait_time = between(1, 3)
-
     @task
     def complete_flow(self):
         # 1. Registration
@@ -38,11 +37,20 @@ class ApiUser(HttpUser):
             else:
                return
 
+        # 2. Admin login
+        login_admin_payload = {"username": "admin", "password": "admin123"}
+        with self.client.post("/auth/login", json=login_admin_payload) as login_admin_res:
+            if login_admin_res.status_code == 200:
+                admin_token = login_admin_res.json().get("admin_token")
+                self.auth_header_admin = {"Authorization": f"Bearer {admin_token}"}
+            else:
+                return
+
 
         # 3. Get user by id
         with self.client.get(
                 f"/user/{user_id}",
-                headers=self.auth_header,
+                headers=self.auth_header_admin,
                 catch_response=True
         ) as get_by_id_res:
             if get_by_id_res.status_code == 200 or get_by_id_res.status_code == 201:
@@ -84,7 +92,7 @@ class ApiUser(HttpUser):
         # 6. Get user by mail
             with self.client.get(
                     f"/user/mail/{user_mail}",
-                    headers=self.auth_header,
+                    headers=self.auth_header_admin,
                     catch_response=True
             ) as get_by_mail_res:
                 if get_by_mail_res.status_code == 200 or get_by_mail_res.status_code == 201:
@@ -92,4 +100,20 @@ class ApiUser(HttpUser):
                 else:
                     get_by_mail_res.failure(f"Get by name failed: {get_by_mail_res.status_code}")
                     return
+
+        #7. Delete user by id
+            with self.client.delete(
+                f"/user/delete/{user_id}",
+                headers=self.auth_header_admin,
+                catch_response=True
+            ) as delete_by_id_res:
+                if delete_by_id_res.status_code == 200 or delete_by_id_res.status_code == 201:
+                    delete_by_id_res.success()
+                else:
+                    delete_by_id_res.failure(f"Delete failed: {delete_by_id_res.status_code}")
+                    return
+
+
+
+
 
