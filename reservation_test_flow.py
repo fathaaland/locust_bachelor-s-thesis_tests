@@ -108,15 +108,14 @@ class ApiFacility(HttpUser):
                               name="/reservation/update/[id]")
 
             # 4. Get reservation by userId
-            if facility_name:
-                self.client.get(f"/reservation/user/{reservation_user}", headers=self.auth_header_admin,
+            self.client.get(f"/reservation/user/{reservation_user}", headers=self.auth_header_admin,
                                 name="/reservation/user/[id]")
 
             # 5. Get reservation by facilityId
-            self.client.get(f"/reservation/type/{facility_type}", headers=self.auth_header_admin,
-                            name="/reservation/type/[type]")
+            self.client.get(f"/reservation/facility/{reservation_facility}", headers=self.auth_header_admin,
+                            name="/reservation/facility/[id]")
 
-            # 6. Get reservation by date
+            # 6. Get reservation by dates
             self.client.get(f"/reservation/type/{facility_type}", headers=self.auth_header_admin,
                             name="/reservation/type/[type]")
 
