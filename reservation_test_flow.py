@@ -101,11 +101,11 @@ class ApiFacility(HttpUser):
 
 
             # 3. Update reservation by id
-            random_capacity = random.randint(1, 30)
-            self.client.patch(f"/facilities/update/{facility_id}",
-                              json={"capacity": random_capacity},
+            updated_endtime = "2025-09-23T13:00:00"
+            self.client.patch(f"/reservation/update/{facility_id}",
+                              json={"capacity": updated_endtime},
                               headers=self.auth_header_admin,
-                              name="/facilities/update/[id]")
+                              name="/reservation/update/[id]")
 
             # 4. Get facility by name
             if facility_name:
