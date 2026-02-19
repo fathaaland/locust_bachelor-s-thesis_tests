@@ -95,3 +95,27 @@ class ApiFacility(HttpUser):
             else:
                 res_res.failure(f"Creation failed: {res_res.status_code}")
                 return
+
+            # 2. Get reservation by id
+            self.client.get(f"/reservation/{reservation_id}", headers=self.auth_header_admin, name="/reservation/[id]")
+
+
+            # 3. Update reservation by id
+            random_capacity = random.randint(1, 30)
+            self.client.patch(f"/facilities/update/{facility_id}",
+                              json={"capacity": random_capacity},
+                              headers=self.auth_header_admin,
+                              name="/facilities/update/[id]")
+
+            # 4. Get facility by name
+            if facility_name:
+                self.client.get(f"/facilities/name/{facility_name}", headers=self.auth_header_admin,
+                                name="/facilities/name/[name]")
+
+            # 5. Get facility by type
+            self.client.get(f"/facilities/type/{facility_type}", headers=self.auth_header_admin,
+                            name="/facilities/type/[type]")
+
+            # 6. Delete facility by id
+            self.client.delete(f"/facilities/delete/{facility_id}", headers=self.auth_header_admin,
+                               name="/facilities/delete/[id]")

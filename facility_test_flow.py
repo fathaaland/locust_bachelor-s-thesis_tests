@@ -57,6 +57,7 @@ class ApiFacility(HttpUser):
         # 2. Get facility by id
         self.client.get(f"/facilities/{facility_id}", headers=self.auth_header_admin, name="/facilities/[id]")
 
+        # 3. Update facility by id
         random_capacity = random.randint(1, 30)
         self.client.patch(f"/facilities/update/{facility_id}",
                           json={"capacity": random_capacity},
