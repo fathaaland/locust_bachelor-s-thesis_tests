@@ -25,25 +25,20 @@ class ApiFacility(HttpUser):
     def reservation_test(self):
         unique_id = str(uuid.uuid4())[:8]
         username = f"Vaclav_{unique_id}"
-        password = "Venca321"
-        email = f"{username}@gmail.com"
-        reg_payload = {"username": username, "password": password, "email": email}
+        reg_payload = {"username": username, "password": "Venca321", "email": f"{username}@gmail.com"}
 
-        user_id = None
         # 1. User registration
+        user_id = None
         with self.client.post("/auth/register", json=reg_payload, name="/auth/register",
                               catch_response=True) as reg_res:
             if reg_res.status_code in [200, 201]:
-                data = reg_res.json()
-                user_id = data.get("id") or data.get("userId") or data.get("uuid")
+                user_id = reg_res.json().get("id") or reg_res.json().get("userId")
                 reg_res.success()
             else:
                 reg_res.failure(f"Reg failed: {reg_res.status_code}")
                 return
 
-        if not user_id:
-            return
-
+        # 2. Facility creation
         f_uuid = str(uuid.uuid4())[:8]
         facility_payload = {
             "name": f"Pitch {f_uuid}",
@@ -51,74 +46,59 @@ class ApiFacility(HttpUser):
             "location": f"Little Italy {f_uuid}",
             "description": "Large pitch.",
             "contactNumber": f"123{f_uuid}",
-            "capacity": "4",
+            "capacity": 4,
             "imageUrl": "https://example.com/images/pitch.jpg",
             "address": f"Street {f_uuid}"
         }
 
         facility_id = None
-        facility_name = None
-        facility_type = "FOOTBALL"
-
-        # 2. Facility creation
         with self.client.post("/facilities/add", json=facility_payload, headers=self.auth_header_admin,
                               name="/facilities/add", catch_response=True) as fac_res:
             if fac_res.status_code in [200, 201]:
-                data = fac_res.json()
-                facility_id = data.get("id") or data.get("facilityId")
-                facility_name = data.get("name") or data.get("facilityName")
+                facility_id = fac_res.json().get("id") or fac_res.json().get("facilityId")
                 fac_res.success()
             else:
-                fac_res.failure(f"Creation failed: {fac_res.status_code} - {fac_res.text}")
+                fac_res.failure(f"Creation failed: {fac_res.status_code}")
                 return
 
-        if not facility_id:
-            return
-
+        # 3. Reservation creation (OPRAVENO: Lomítko a Payload)
         reservation_payload = {
-             "user": {f"{user_id}"},
-            "sportFacility": {f"{facility_id}"},
+            "user": {"id": user_id},
+            "sportFacility": {"id": facility_id},
             "startTime": "2025-09-23T10:00:00",
             "endTime": "2025-09-23T11:00:00"
         }
 
-        # 3. Reservation creation
-        with self.client.post("reservation/add", json=reservation_payload, headers=self.auth_header_admin,
+        reservation_id = None
+        with self.client.post("/reservation/add", json=reservation_payload, headers=self.auth_header_admin,
                               name="/reservation/add", catch_response=True) as res_res:
             if res_res.status_code in [200, 201]:
                 data = res_res.json()
                 reservation_id = data.get("id") or data.get("reservationId")
-                reservation_user = data.get("user") or data.get("userId")
-                reservation_facility = data.get("facility") or data.get("facilityId")
-
                 res_res.success()
             else:
-                res_res.failure(f"Creation failed: {res_res.status_code}")
+                res_res.failure(f"Reservation creation failed: {res_res.status_code}")
                 return
 
-            # 2. Get reservation by id
-            self.client.get(f"/reservation/{reservation_id}", headers=self.auth_header_admin, name="/reservation/[id]")
+        # --- DALŠÍ KROKY UŽ JSOU MIMO WITH BLOK (Správné odsazení) ---
 
+        # 4. Get reservation by id
+        self.client.get(f"/reservation/{reservation_id}", headers=self.auth_header_admin, name="/reservation/[id]")
 
-            # 3. Update reservation by id
-            updated_endtime = "2025-09-23T13:00:00"
-            self.client.patch(f"/reservation/update/{facility_id}",
-                              json={"capacity": updated_endtime},
-                              headers=self.auth_header_admin,
-                              name="/reservation/update/[id]")
+        # 5. Update reservation (Opraveno: reservation_id místo facility_id)
+        updated_payload = {"endTime": "2025-09-23T13:00:00"}
+        self.client.patch(f"/reservation/update/{reservation_id}", json=updated_payload,
+                          headers=self.auth_header_admin, name="/reservation/update/[id]")
 
-            # 4. Get reservation by userId
-            self.client.get(f"/reservation/user/{reservation_user}", headers=self.auth_header_admin,
-                                name="/reservation/user/[id]")
+        # 6. Get by User a Facility (Používáme ID, která už máme z předchozích kroků)
+        self.client.get(f"/reservation/user/{user_id}", headers=self.auth_header_admin, name="/reservation/user/[id]")
+        self.client.get(f"/reservation/facility/{facility_id}", headers=self.auth_header_admin,
+                        name="/reservation/facility/[id]")
 
-            # 5. Get reservation by facilityId
-            self.client.get(f"/reservation/facility/{reservation_facility}", headers=self.auth_header_admin,
-                            name="/reservation/facility/[id]")
-
-            # 6. Get reservation by dates
-            self.client.get(f"/reservation/type/{facility_type}", headers=self.auth_header_admin,
-                            name="/reservation/type/[type]")
-
-            # 7. Delete reservation by id
-            self.client.delete(f"/reservation/delete/{facility_id}", headers=self.auth_header_admin,
-                               name="/reservation/delete/[id]")
+        # 7. Delete reservation
+        with self.client.delete(f"/reservation/delete/{reservation_id}", headers=self.auth_header_admin,
+                                name="/reservation/delete/[id]", catch_response=True) as del_res:
+            if del_res.status_code in [200, 204]:
+                del_res.success()
+            else:
+                del_res.failure(f"Delete failed: {del_res.status_code}")
