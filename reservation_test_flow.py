@@ -1,8 +1,8 @@
 import uuid
 from locust import HttpUser, task, between
+import random
 
-
-class ApiUser(HttpUser):
+class ApiFacility(HttpUser):
     wait_time = between(1, 3)
 
     def on_start(self):
@@ -17,12 +17,12 @@ class ApiUser(HttpUser):
                     self.auth_header_admin = {"Authorization": f"Bearer {token}"}
                     res.success()
                 else:
-                    res.failure("Admin token NOT FOUND in JSON")
+                    res.failure("Admin token NOT FOUND")
             else:
                 res.failure(f"Admin login failed: {res.status_code}")
 
     @task
-    def user_flow(self):
+    def reservation_test(self):
         unique_id = str(uuid.uuid4())[:8]
         username = f"Vaclav_{unique_id}"
         password = "Venca321"
@@ -44,50 +44,54 @@ class ApiUser(HttpUser):
         if not user_id:
             return
 
-        # 2. Login user
-        login_payload = {"username": username, "password": password}
-        with self.client.post("/auth/login", json=login_payload, name="/auth/login", catch_response=True) as login_res:
-            if login_res.status_code == 200:
-                login_res.success()
-            else:
-                login_res.failure(f"User login failed: {login_res.status_code}")
+        f_uuid = str(uuid.uuid4())[:8]
+        facility_payload = {
+            "name": f"Pitch {f_uuid}",
+            "type": "FOOTBALL",
+            "location": f"Little Italy {f_uuid}",
+            "description": "Large pitch.",
+            "contactNumber": f"123{f_uuid}",
+            "capacity": "4",
+            "imageUrl": "https://example.com/images/pitch.jpg",
+            "address": f"Street {f_uuid}"
+        }
 
-        # 3. Get user by id
-        with self.client.get(f"/user/{user_id}", headers=self.auth_header_admin, name="/user/[id]",
-                             catch_response=True) as res:
-            if res.status_code == 200:
-                res.success()
-            else:
-                res.failure(f"Admin Get by ID failed: {res.status_code}")
+        facility_id = None
+        facility_name = None
+        facility_type = "FOOTBALL"
 
-        # 4. Update user by id
-        with self.client.patch(f"/user/update/{user_id}", json={"password": "updatedByAdmin123"},
-                               headers=self.auth_header_admin, name="/user/update/[id]", catch_response=True) as res:
-            if res.status_code == 200:
-                res.success()
+        # 2. Facility creation
+        with self.client.post("/facilities/add", json=facility_payload, headers=self.auth_header_admin,
+                              name="/facilities/add", catch_response=True) as fac_res:
+            if fac_res.status_code in [200, 201]:
+                data = fac_res.json()
+                facility_id = data.get("id") or data.get("facilityId")
+                facility_name = data.get("name") or data.get("facilityName")
+                fac_res.success()
             else:
-                res.failure(f"Admin Update failed: {res.status_code}")
+                fac_res.failure(f"Creation failed: {fac_res.status_code} - {fac_res.text}")
+                return
 
-        # 5. Get user by username
-        with self.client.get(f"/user/by-username/{username}", headers=self.auth_header_admin,
-                             name="/user/by-username/[name]", catch_response=True) as res:
-            if res.status_code == 200:
-                res.success()
-            else:
-                res.failure(f"Admin Get by Name failed: {res.status_code}")
+        if not facility_id:
+            return
 
-        # 6. Get user by mail
-        with self.client.get(f"/user/mail/{email}", headers=self.auth_header_admin,
-                             name="/user/mail/[mail]", catch_response=True) as res:
-            if res.status_code == 200:
-                res.success()
-            else:
-                res.failure(f"Admin Get by Mail failed: {res.status_code}")
+        reservation_payload = {
+             "user": {f"{user_id}"},
+            "sportFacility": {f"{facility_id}"},
+            "startTime": "2025-09-23T10:00:00",
+            "endTime": "2025-09-23T11:00:00"
+        }
 
-        # 7. Delete user by id
-        with self.client.delete(f"/user/delete/{user_id}", headers=self.auth_header_admin,
-                                name="/user/delete/[id]", catch_response=True) as res:
-            if res.status_code in [200, 204]:
-                res.success()
+        # 3. Reservation creation
+        with self.client.post("reservation/add", json=reservation_payload, headers=self.auth_header_admin,
+                              name="/reservation/add", catch_response=True) as res_res:
+            if res_res.status_code in [200, 201]:
+                data = res_res.json()
+                reservation_id = data.get("id") or data.get("reservationId")
+                reservation_user = data.get("user") or data.get("userId")
+                reservation_facility = data.get("facility") or data.get("facilityId")
+
+                res_res.success()
             else:
-                res.failure(f"Admin Delete failed: {res.status_code}")
+                res_res.failure(f"Creation failed: {res_res.status_code}")
+                return
