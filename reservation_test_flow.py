@@ -61,7 +61,7 @@ class ApiFacility(HttpUser):
                 fac_res.failure(f"Creation failed: {fac_res.status_code}")
                 return
 
-        # 3. Reservation creation (OPRAVENO: Lomítko a Payload)
+        # 3. Reservation creation
         reservation_payload = {
             "user": {"id": user_id},
             "sportFacility": {"id": facility_id},
@@ -80,17 +80,15 @@ class ApiFacility(HttpUser):
                 res_res.failure(f"Reservation creation failed: {res_res.status_code}")
                 return
 
-        # --- DALŠÍ KROKY UŽ JSOU MIMO WITH BLOK (Správné odsazení) ---
-
         # 4. Get reservation by id
         self.client.get(f"/reservation/{reservation_id}", headers=self.auth_header_admin, name="/reservation/[id]")
 
-        # 5. Update reservation (Opraveno: reservation_id místo facility_id)
+        # 5. Update reservation
         updated_payload = {"endTime": "2025-09-23T13:00:00"}
         self.client.patch(f"/reservation/update/{reservation_id}", json=updated_payload,
                           headers=self.auth_header_admin, name="/reservation/update/[id]")
 
-        # 6. Get by User a Facility (Používáme ID, která už máme z předchozích kroků)
+        # 6. Get by User a Facility
         self.client.get(f"/reservation/user/{user_id}", headers=self.auth_header_admin, name="/reservation/user/[id]")
         self.client.get(f"/reservation/facility/{facility_id}", headers=self.auth_header_admin,
                         name="/reservation/facility/[id]")
